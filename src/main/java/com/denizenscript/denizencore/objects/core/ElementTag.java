@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 
 public class ElementTag implements ObjectTag {
 
-    // NOTE: Explicitly not example value
+    // NOTE: Explicitly no example value
     // <--[ObjectType]
     // @name ElementTag
     // @prefix el
@@ -53,6 +53,12 @@ public class ElementTag implements ObjectTag {
     //
     // Note that while other objects often return their object identifier (p@, li@, e@, etc.), elements usually do not (except special type-validation circumstances).
     // They will, however, recognize the object notation "el@" if it is used.
+    //
+    // @Matchable
+    // ElementTag matchers, often used as a default when other object types aren't available
+    // "integer": plaintext: matches if the element is an integer number.
+    // "decimal": plaintext: matches if the element is a decimal number.
+    // "boolean": plaintext: matches if the element is a valid boolean ("true" or "false").
     //
     // -->
 
@@ -602,7 +608,7 @@ public class ElementTag implements ObjectTag {
         tagProcessor.registerStaticTag(ElementTag.class, "as_decimal", (attribute, object) -> {
             String element = object.element;
             try {
-                return new ElementTag(Double.valueOf(element));
+                return new ElementTag(Double.parseDouble(element));
             }
             catch (NumberFormatException e) {
                 if (!attribute.hasAlternative()) {
@@ -964,20 +970,6 @@ public class ElementTag implements ObjectTag {
             }
             return new ElementTag(object.element.equals(attribute.getParam()));
         }, "equals_with_case");
-
-        // <--[tag]
-        // @attribute <ElementTag.advanced_matches_text[<matcher>]>
-        // @returns ElementTag(Boolean)
-        // @group element checking
-        // @description
-        // Returns whether the element matches some matcher text, using the system behind <@link language Advanced Script Event Matching>.
-        // -->
-        tagProcessor.registerStaticTag(ElementTag.class, "advanced_matches_text", (attribute, object) -> {
-            if (!attribute.hasParam()) {
-                return null;
-            }
-            return new ElementTag(ScriptEvent.createMatcher(attribute.getParam()).doesMatch(object.element));
-        }, "advanced_matches");
 
         // <--[tag]
         // @attribute <ElementTag.regex_matches[<regex>]>
@@ -2666,5 +2658,16 @@ public class ElementTag implements ObjectTag {
 
     public ObjectTag getNextObjectTypeDown() {
         return new FailedObjectTag();
+    }
+
+    @Override
+    public boolean advancedMatches(String matcher) {
+        String matcherLow = CoreUtilities.toLowerCase(matcher);
+        switch (matcherLow) {
+            case "integer": return isInt();
+            case "decimal": return isDouble();
+            case "boolean": return isBoolean();
+        }
+        return ScriptEvent.runGenericCheck(matcher, element);
     }
 }

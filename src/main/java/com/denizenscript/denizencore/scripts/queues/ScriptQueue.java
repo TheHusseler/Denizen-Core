@@ -3,10 +3,7 @@ package com.denizenscript.denizencore.scripts.queues;
 import com.denizenscript.denizencore.objects.*;
 import com.denizenscript.denizencore.objects.core.*;
 import com.denizenscript.denizencore.scripts.queues.core.TimedQueue;
-import com.denizenscript.denizencore.utilities.CoreUtilities;
-import com.denizenscript.denizencore.utilities.DefinitionProvider;
-import com.denizenscript.denizencore.utilities.ListQueue;
-import com.denizenscript.denizencore.utilities.QueueWordList;
+import com.denizenscript.denizencore.utilities.*;
 import com.denizenscript.denizencore.utilities.debugging.Debuggable;
 import com.denizenscript.denizencore.utilities.debugging.Debug;
 import com.denizenscript.denizencore.utilities.scheduling.OneTimeSchedulable;
@@ -34,7 +31,7 @@ public abstract class ScriptQueue implements Debuggable, DefinitionProvider {
                         .append(c1).append(" times (").append(c2).append(event.eventData.stats_scriptFires).append(c1).append(" script fires)")
                         .append(c1).append(", totalling ").append(c2).append((float) event.eventData.stats_nanoTimes / 1000000f)
                         .append(c1).append("ms, averaging ").append(c2).append((float) event.eventData.stats_nanoTimes / 1000000f / (float) event.eventData.stats_fires)
-                        .append(c1).append("ms per event or ").append(c2).append(+((float) event.eventData.stats_nanoTimes / 1000000f / (float) event.eventData.stats_scriptFires)).append(c1).append("ms per script.\n");
+                        .append(c1).append("ms per event or ").append(c2).append(((float) event.eventData.stats_nanoTimes / 1000000f / (float) event.eventData.stats_scriptFires)).append(c1).append("ms per script.\n");
                 statsSet.add(new HashMap.SimpleEntry<>(event.eventData.stats_nanoTimes, stats.toString()));
             }
         }
@@ -316,6 +313,14 @@ public abstract class ScriptQueue implements Debuggable, DefinitionProvider {
         if (script_entries.isEmpty()) {
             return;
         }
+        if (CoreConfiguration.verifyThreadMatches && !DenizenCore.implementation.isSafeThread()) {
+            try {
+                throw new RuntimeException("Invalid thread access - starting queue from thread " + Thread.currentThread());
+            }
+            catch (Throwable ex) {
+                Debug.echoError(ex);
+            }
+        }
         allQueues.put(id, this);
         is_started = true;
         long delay = delay_time - DenizenCore.serverTimeMillis;
@@ -375,6 +380,14 @@ public abstract class ScriptQueue implements Debuggable, DefinitionProvider {
             return;
         }
         is_stopping = true;
+        if (CoreConfiguration.verifyThreadMatches && !DenizenCore.implementation.isSafeThread()) {
+            try {
+                throw new RuntimeException("Invalid thread access - stopping queue from thread " + Thread.currentThread());
+            }
+            catch (Throwable ex) {
+                Debug.echoError(ex);
+            }
+        }
         allQueues.remove(id);
         if (queueNeedsToDebug()) {
             queueDebug("Completing queue '<QUEUE>' in <A>" + ((System.nanoTime() - startTime) / 1000000) + "<O>ms.");

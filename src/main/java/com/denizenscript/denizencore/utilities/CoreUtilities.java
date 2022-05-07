@@ -14,12 +14,14 @@ import com.denizenscript.denizencore.utilities.text.StringHolder;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
@@ -672,27 +674,6 @@ public class CoreUtilities {
         return nArg.toString();
     }
 
-    public static boolean xthArgEquals(int argc, String args, String input) {
-        char[] data = args.toCharArray();
-        char[] data2 = input.toCharArray();
-        int arg = 0;
-        int x = 0;
-        for (int i = 0; i < data.length; i++) {
-            if (data[i] == ' ') {
-                arg++;
-            }
-            else if (arg == argc) {
-                if (x == data2.length) {
-                    return false;
-                }
-                if (data2[x++] != data[i]) {
-                    return false;
-                }
-            }
-        }
-        return x == data2.length;
-    }
-
     public static String getClosestOption(List<String> strs, String opt) {
         int minDist = Integer.MAX_VALUE;
         opt = CoreUtilities.toLowerCase(opt);
@@ -929,5 +910,17 @@ public class CoreUtilities {
 
     public static long monotonicMillisToReal(long monotonic) {
         return System.currentTimeMillis() + (monotonic - monotonicMillis());
+    }
+
+    public static String hash_md5(byte[] bytes) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(bytes, 0, bytes.length);
+            return new BigInteger(1, md.digest()).toString(16);
+        }
+        catch (Throwable ex) {
+            Debug.echoError(ex);
+        }
+        return null;
     }
 }

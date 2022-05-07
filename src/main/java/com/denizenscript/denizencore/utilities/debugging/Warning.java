@@ -4,12 +4,16 @@ import com.denizenscript.denizencore.scripts.ScriptEntry;
 import com.denizenscript.denizencore.scripts.containers.ScriptContainer;
 import com.denizenscript.denizencore.scripts.queues.ScriptQueue;
 import com.denizenscript.denizencore.tags.TagContext;
+import com.denizenscript.denizencore.utilities.Deprecations;
 
 public class Warning {
 
+    public String id;
+
     public String message;
 
-    public Warning(String message) {
+    public Warning(String id, String message) {
+        this.id = id;
         this.message = message;
     }
 
@@ -22,6 +26,7 @@ public class Warning {
     }
 
     public void warn(ScriptEntry entry) {
+        Deprecations.firedRecently.add(id);
         if (!testShouldWarn()) {
             return;
         }
@@ -37,6 +42,7 @@ public class Warning {
     }
 
     public void warn(ScriptContainer script) {
+        Deprecations.firedRecently.add(id);
         if (!testShouldWarn()) {
             return;
         }
